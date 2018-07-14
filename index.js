@@ -10,7 +10,7 @@ let lastMessageChannel = ''
  * 1. Receive message with start command from host
  * 2. Create new channel in that guild
  * 3. Take screenshots and send them in that channel
- * 4. Until host sends stop command -> delete channel
+ * 4. If host sends stop command, delete the channel
  */
 
 client.on('ready', () => {
@@ -68,7 +68,19 @@ client.on('message', async msg => {
             chalk.red(msg.author.username),
             chalk.magenta(msg.content)
         )
+
+        if (config.hostID === msg.author.id) {
+            console.log(chalk.red('SUCCESS'))
+        }
     }
 })
 
+process.on('SIGINT', () => handleExit(client))
+process.on('SIGTERM', () => handleExit(client))
+
+function handleExit(client) {
+    console.log(chalk.yellow('Terminating client...'))
+    client.destroy()
+        .then(process.exit())
+}
 client.login(config.token)
