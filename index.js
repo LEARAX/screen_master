@@ -1,18 +1,12 @@
 const config = require('./config'),
     chalk = require('chalk'),
-    Discord = require('discord.js')
+    Discord = require('discord.js'),
+    screenshot = require('screenshot-desktop')
 
 const client = new Discord.Client()
 
 let lastMessageChannel = ''
 let streamSource = {}
-
-/*
- * 1. Receive message with start command from host
- * 2. Create new channel in that guild
- * 3. Take screenshots and send them in that channel
- * 4. If host sends stop command, delete the channel
- */
 
 client.on('ready', () => {
     console.log('%s %s%s',
@@ -80,8 +74,22 @@ client.on('message', async msg => {
                     )
                     msg.guild.createChannel(msg.author.tag + '\'s Screen')
                         .then( channel => {
-                            channel.send('HELLO')
                             streamSource[msg.author.id] = channel.id
+                            let imageSender = setInterval( () => {
+                                if (streamSource[msg.author.id]) {
+                                    screenshot()
+                                        .then( img => {
+                                            channel.send({
+                                                'files': [{
+                                                    'attachment': img,
+                                                    'name': 'screenshot.jpg'
+                                                }]
+                                            })
+                                        })
+                                } else {
+                                    clearInterval(imageSender)
+                                }
+                            }, 2000)
                         })
                         .catch(err => {
                             msg.reply('Failed to create channel: ' + err)
@@ -96,6 +104,11 @@ client.on('message', async msg => {
                     let channel = msg.guild.channels.get(
                         streamSource[msg.author.id]
                     )
+                    console.log('%s: %s',
+                        chalk.red('Found channel'),
+                        chalk.yellow(channel.name)
+                    )
+                    delete streamSource[msg.author.id]
                     channel.delete()
                     break
                 }
