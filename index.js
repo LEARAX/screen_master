@@ -72,7 +72,7 @@ client.on('message', async msg => {
                         chalk.red('Starting stream for'),
                         chalk.blue(msg.author.username)
                     )
-                    msg.guild.createChannel(msg.author.tag + '\'s Screen')
+                    msg.guild.createChannel('Screen - ' + msg.author.tag)
                         .then( channel => {
                             streamSource[msg.author.id] = channel.id
                             let imageSender = setInterval( () => {
