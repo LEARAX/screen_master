@@ -5,6 +5,7 @@ const config = require('./config'),
 const client = new Discord.Client()
 
 let lastMessageChannel = ''
+let streamSource = {}
 
 /*
  * 1. Receive message with start command from host
@@ -69,8 +70,36 @@ client.on('message', async msg => {
             chalk.magenta(msg.content)
         )
 
-        if (config.hostID === msg.author.id) {
-            console.log(chalk.red('SUCCESS'))
+        if (config.hostID === msg.author.id && msg.content.startsWith(']')) {
+            msg.delete()
+            switch (msg.content.slice(1)) {
+                case 'start': {
+                    console.log('%s %s',
+                        chalk.red('Starting stream for'),
+                        chalk.blue(msg.author.username)
+                    )
+                    msg.guild.createChannel(msg.author.tag + '\'s Screen')
+                        .then( channel => {
+                            channel.send('HELLO')
+                            streamSource[msg.author.id] = channel.id
+                        })
+                        .catch(err => {
+                            msg.reply('Failed to create channel: ' + err)
+                        })
+                    break
+                }
+                case 'end': {
+                    console.log('%s %s',
+                        chalk.red('Terminating stream for'),
+                        chalk.blue(msg.author.username)
+                    )
+                    let channel = msg.guild.channels.get(
+                        streamSource[msg.author.id]
+                    )
+                    channel.delete()
+                    break
+                }
+            }
         }
     }
 })
